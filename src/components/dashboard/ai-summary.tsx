@@ -23,11 +23,11 @@ export default async function AiSummary() {
 
   let summary = "No events today. Enjoy your day!";
   if (formattedEvents.length > 0) {
-    const result = await summarizeTodayEvents({
-      todayDate: format(today, 'yyyy-MM-dd'),
-      events: formattedEvents,
-    });
-    summary = result.summary;
+    // const result = await summarizeTodayEvents({
+    //   todayDate: format(today, 'yyyy-MM-dd'),
+    //   events: formattedEvents,
+    // });
+    // summary = result.summary;
   }
 
   return (

@@ -3,6 +3,9 @@
 import { z } from "zod"
 import { generateAiAssistedEventDescription } from "@/ai/flows/ai-assisted-event-description"
 import { revalidatePath } from "next/cache"
+import { cookies } from "next/headers"
+import { supabase } from "@/lib/supabase"
+import { format } from "date-fns"
 
 const eventSchema = z.object({
   title: z.string().min(2),
@@ -20,13 +23,36 @@ export async function createEvent(values: z.infer<typeof eventSchema>) {
     return { success: false, error: "Invalid fields." }
   }
 
-  console.log("Creating event:", validatedFields.data)
-  // Here you would typically save the event to a database.
-  // We'll just log it for now.
+  // Get current user from session cookie
+  const cookieStore = await cookies()
+  const sessionId = cookieStore.get('session_id')?.value
 
-  revalidatePath('/dashboard')
+  if (!sessionId) {
+    return { success: false, error: "Not authenticated." }
+  }
+
+  const { title, description, date, startTime, endTime } = validatedFields.data
+
+  // Build ISO datetime strings by combining the date with each time
+  const dateStr = format(date, 'yyyy-MM-dd')
+  const startTimestamp = new Date(`${dateStr}T${startTime}:00`).toISOString()
+  const endTimestamp = new Date(`${dateStr}T${endTime}:00`).toISOString()
+
+  const { error } = await supabase.from('schedule').insert({
+    user_id: sessionId,
+    title,
+    description: description ?? null,
+    start_time: startTimestamp,
+    end_time: endTimestamp,
+  })
+
+  if (error) {
+    console.error("Error inserting schedule:", error)
+    return { success: false, error: "Failed to save event. Please try again." }
+  }
+
   revalidatePath('/calendar')
-  
+
   return { success: true }
 }
 

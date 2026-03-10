@@ -47,7 +47,11 @@ const formSchema = z.object({
   endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)"),
 })
 
-export function EventForm() {
+type EventFormProps = {
+  onSuccess?: () => void
+}
+
+export function EventForm({ onSuccess }: EventFormProps) {
   const { toast } = useToast()
   const [isGenerating, setIsGenerating] = useState(false)
   const form = useForm<z.infer<typeof formSchema>>({
@@ -70,6 +74,7 @@ export function EventForm() {
         description: `Your event "${values.title}" has been successfully created.`,
       })
       form.reset()
+      onSuccess?.()
     } else {
       toast({
         variant: "destructive",

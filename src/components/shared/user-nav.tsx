@@ -16,9 +16,17 @@ import {
 import { users } from '@/lib/data';
 import { CreditCard, LogOut, Settings, User } from 'lucide-react';
 import Link from 'next/link';
+import { logoutUser } from '@/actions/auth';
+import { redirect } from 'next/navigation';
 
 export function UserNav() {
   const currentUser = users[0];
+
+  async function onSubmitLogout() {
+    console.log('logout');
+    await logoutUser();
+    redirect('/login');
+  }
 
   return (
     <DropdownMenu>
@@ -59,11 +67,9 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/login">
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
-          </Link>
+        <DropdownMenuItem onClick={onSubmitLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

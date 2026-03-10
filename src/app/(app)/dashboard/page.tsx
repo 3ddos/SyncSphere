@@ -2,8 +2,12 @@ import AiSummary from '@/components/dashboard/ai-summary';
 import TodaysEvents from '@/components/dashboard/todays-events';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getTodaysSchedules } from '@/actions/schedule';
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const result = await getTodaysSchedules();
+  const todaySchedules = Array.isArray(result) ? result : [];
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -17,7 +21,7 @@ export default function DashboardPage() {
            </Suspense>
         </div>
         <div className="col-span-4 lg:col-span-7">
-          <TodaysEvents />
+          <TodaysEvents schedules={todaySchedules} />
         </div>
       </div>
     </div>

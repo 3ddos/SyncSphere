@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -11,8 +14,10 @@ import { EventForm } from "./event-form"
 import { PlusCircle } from "lucide-react"
 
 export default function EventSheet() {
+  const [open, setOpen] = useState(false)
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -23,11 +28,11 @@ export default function EventSheet() {
         <SheetHeader>
           <SheetTitle>Create New Event</SheetTitle>
           <SheetDescription>
-            Fill in the details for your new event. Click 'Generate with AI' for an enhanced description.
+            Fill in the details for your new event. Click &apos;Generate with AI&apos; for an enhanced description.
           </SheetDescription>
         </SheetHeader>
         <div className="py-4">
-            <EventForm />
+            <EventForm onSuccess={() => setOpen(false)} />
         </div>
       </SheetContent>
     </Sheet>

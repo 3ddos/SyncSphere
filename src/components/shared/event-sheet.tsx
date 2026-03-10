@@ -13,15 +13,15 @@ import {
 import { EventForm } from "./event-form"
 import { PlusCircle } from "lucide-react"
 
-export default function EventSheet() {
+export default function EventSheet({ selectedDate, setSelectedDate }: { selectedDate: Date | undefined, setSelectedDate: (date: Date | undefined) => void }) {
   const [open, setOpen] = useState(false)
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Event
+          <PlusCircle className="mr-2 h-4 w-4" />
+          New Event
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full max-w-lg overflow-y-auto">
@@ -32,7 +32,7 @@ export default function EventSheet() {
           </SheetDescription>
         </SheetHeader>
         <div className="py-4">
-            <EventForm onSuccess={() => setOpen(false)} />
+          <EventForm onSuccess={() => setOpen(false)} selectedDate={selectedDate} />
         </div>
       </SheetContent>
     </Sheet>

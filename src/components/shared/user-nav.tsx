@@ -7,25 +7,32 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { users } from '@/lib/data';
-import { CreditCard, LogOut, Settings, User } from 'lucide-react';
-import Link from 'next/link';
-import { logoutUser } from '@/actions/auth';
+import { LogOut } from 'lucide-react';
+import { logoutUser, getCurrentUser } from '@/actions/auth';
 import { redirect } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { User } from '@/lib/types';
 
 export function UserNav() {
-  const currentUser = users[0];
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   async function onSubmitLogout() {
     console.log('logout');
     await logoutUser();
     redirect('/login');
+  }
+
+  useEffect(() => {
+    getCurrentUser().then((user) => setCurrentUser(user));
+  }, []);
+
+  if (!currentUser) {
+    return null;
   }
 
   return (
@@ -52,7 +59,7 @@ export function UserNav() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuGroup>
+        {/* <DropdownMenuGroup>
           <DropdownMenuItem>
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
@@ -66,7 +73,7 @@ export function UserNav() {
             <span>Settings</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator /> */}
         <DropdownMenuItem onClick={onSubmitLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>

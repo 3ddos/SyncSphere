@@ -20,9 +20,11 @@ const defaultEventColors = [
 
 type Props = {
   schedules: Schedule[];
+  selectedDate: Date | undefined;
+  setSelectedDate: (date: Date | undefined) => void;
 };
 
-export default function MonthlyCalendar({ schedules }: Props) {
+export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDate }: Props) {
   const formattedEvents = React.useMemo(() => {
     return schedules.map((schedule, index) => {
       const color = schedule.color ?? defaultEventColors[index % defaultEventColors.length];
@@ -44,7 +46,8 @@ export default function MonthlyCalendar({ schedules }: Props) {
 
   return (
     <Card className="w-full">
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .fc {
           --fc-border-color: hsl(var(--border) / 0.5);
           --fc-button-text-color: hsl(var(--primary-foreground));
@@ -59,6 +62,13 @@ export default function MonthlyCalendar({ schedules }: Props) {
           --fc-today-bg-color: hsl(var(--accent) / 0.3);
           --fc-page-bg-color: transparent;
           font-family: inherit;
+        }
+        .fc .fc-day-today {
+          background: hsl(var(--accent) / 0.3) !important;
+        }
+        .fc .fc-selected-day {
+          background: hsl(var(--primary) / 0.1) !important;
+          border: 2px solid hsl(var(--primary)) !important;
         }
         .fc .fc-button {
           font-weight: 500;
@@ -103,7 +113,7 @@ export default function MonthlyCalendar({ schedules }: Props) {
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: ''
           }}
           events={formattedEvents}
           height="auto"
@@ -113,11 +123,17 @@ export default function MonthlyCalendar({ schedules }: Props) {
           nowIndicator={true}
           navLinks={true}
           dayMaxEvents={true}
+          dayCellClassNames={(arg) => {
+            if (selectedDate && arg.date.toDateString() === selectedDate.toDateString()) {
+              return 'fc-selected-day';
+            }
+            return '';
+          }}
           buttonText={{
-            today: 'Today',
-            month: 'Month',
-            week: 'Week',
-            day: 'Day',
+            today: 'Today'
+          }}
+          dateClick={(info) => {
+            setSelectedDate(info.date);
           }}
         />
         {schedules.length === 0 && (

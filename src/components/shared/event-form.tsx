@@ -39,7 +39,6 @@ const formSchema = z.object({
     message: "Title must be at least 2 characters.",
   }),
   description: z.string().optional(),
-  calendarId: z.string().min(1, { message: "Please select a calendar." }),
   date: z.date({
     required_error: "A date is required.",
   }),
@@ -49,9 +48,10 @@ const formSchema = z.object({
 
 type EventFormProps = {
   onSuccess?: () => void
+  selectedDate?: Date
 }
 
-export function EventForm({ onSuccess }: EventFormProps) {
+export function EventForm({ onSuccess, selectedDate }: EventFormProps) {
   const { toast } = useToast()
   const [isGenerating, setIsGenerating] = useState(false)
   const form = useForm<z.infer<typeof formSchema>>({
@@ -59,14 +59,14 @@ export function EventForm({ onSuccess }: EventFormProps) {
     defaultValues: {
       title: "",
       description: "",
-      calendarId: "",
-      date: new Date(),
-      startTime: format(new Date(), "HH:mm"),
-      endTime: format(new Date(new Date().getTime() + 60 * 60 * 1000), "HH:mm"),
+      date: selectedDate || new Date(),
+      startTime: format(selectedDate || new Date(), "HH:mm"),
+      endTime: format(selectedDate || new Date(new Date().getTime() + 60 * 60 * 1000), "HH:mm"),
     },
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log('¡onSubmit')
     const result = await createEvent(values)
     if (result.success) {
       toast({
@@ -88,27 +88,27 @@ export function EventForm({ onSuccess }: EventFormProps) {
     setIsGenerating(true)
     const title = form.getValues("title");
     if (!title) {
-        toast({
-            variant: "destructive",
-            title: "Title is required",
-            description: "Please enter an event title to generate a description.",
-        });
-        setIsGenerating(false);
-        return;
+      toast({
+        variant: "destructive",
+        title: "Title is required",
+        description: "Please enter an event title to generate a description.",
+      });
+      setIsGenerating(false);
+      return;
     }
     const result = await generateDescription({ title });
     if (result.success && result.description) {
-        form.setValue("description", result.description);
-        toast({
-            title: "Description Generated",
-            description: "AI has successfully generated a description for your event.",
-        });
+      form.setValue("description", result.description);
+      toast({
+        title: "Description Generated",
+        description: "AI has successfully generated a description for your event.",
+      });
     } else {
-        toast({
-            variant: "destructive",
-            title: "Generation Failed",
-            description: result.error,
-        });
+      toast({
+        variant: "destructive",
+        title: "Generation Failed",
+        description: result.error,
+      });
     }
     setIsGenerating(false);
   }
@@ -130,7 +130,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
           )}
         />
 
-        <FormField
+        {/* <FormField
             control={form.control}
             name="calendarId"
             render={({ field }) => (
@@ -151,8 +151,8 @@ export function EventForm({ onSuccess }: EventFormProps) {
                 <FormMessage />
                 </FormItem>
             )}
-        />
-        
+        /> */}
+
         <FormField
           control={form.control}
           name="description"
@@ -161,8 +161,8 @@ export function EventForm({ onSuccess }: EventFormProps) {
               <div className="flex items-center justify-between">
                 <FormLabel>Description</FormLabel>
                 <Button variant="ghost" size="sm" type="button" onClick={handleGenerateDescription} disabled={isGenerating}>
-                    <Wand2 className={cn("mr-2 h-4 w-4", isGenerating && "animate-spin")} />
-                    {isGenerating ? "Generating..." : "Generate with AI"}
+                  <Wand2 className={cn("mr-2 h-4 w-4", isGenerating && "animate-spin")} />
+                  {isGenerating ? "Generating..." : "Generate with AI"}
                 </Button>
               </div>
               <FormControl>
@@ -184,7 +184,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
             <FormItem className="flex flex-col">
               <FormLabel>Date</FormLabel>
               <Popover>
-                <PopoverTrigger asChild>
+                <PopoverTrigger asChild disabled={true}>
                   <FormControl>
                     <Button
                       variant={"outline"}
@@ -217,32 +217,32 @@ export function EventForm({ onSuccess }: EventFormProps) {
         />
 
         <div className="grid grid-cols-2 gap-4">
-            <FormField
+          <FormField
             control={form.control}
             name="startTime"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>Start Time</FormLabel>
                 <FormControl>
-                    <Input type="time" {...field} />
+                  <Input type="time" {...field} />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
-            <FormField
+          />
+          <FormField
             control={form.control}
             name="endTime"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>End Time</FormLabel>
                 <FormControl>
-                    <Input type="time" {...field} />
+                  <Input type="time" {...field} />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
+          />
         </div>
 
         <Button type="submit" className="w-full">Create Event</Button>

@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
+import { User } from '@/lib/types';
 
 export async function registerUser(formData: FormData) {
   try {
@@ -57,6 +58,12 @@ export async function registerUser(formData: FormData) {
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: '/',
     });
+    cookieStore.set('session_user', JSON.stringify(newUser), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: '/',
+    });
 
     return { success: true, user: newUser };
   } catch (err: any) {
@@ -101,6 +108,13 @@ export async function loginUser(formData: FormData) {
       path: '/',
     });
 
+    cookieStore.set('session_user', JSON.stringify(user), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: '/',
+    });
+
     return { success: true, user: { id: user.id, name: user.name, email: user.email } };
   } catch (err: any) {
     console.error('Login error:', err);
@@ -112,4 +126,15 @@ export async function logoutUser() {
   console.log('logoutUser')
   const cookieStore = await cookies();
   cookieStore.delete('session_id');
+  cookieStore.delete('session_user');
+}
+
+export async function getCurrentUser() {
+  const cookieStore = await cookies();
+  const sessionUser = cookieStore.get('session_user')?.value;
+  const currentUser = sessionUser
+    ? JSON.parse(sessionUser)
+    : { id: '', name: 'Guest', email: '', avatarUrl: '' };
+
+  return currentUser as User;
 }

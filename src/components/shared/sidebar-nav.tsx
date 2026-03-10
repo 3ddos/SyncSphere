@@ -52,7 +52,7 @@ export function SidebarNav() {
             Calendar
           </Link>
         </nav>
-        <div className="flex-1 px-4 py-4">
+        {/* <div className="flex-1 px-4 py-4">
             <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-primary-foreground/70">Calendars</h3>
             <div className="space-y-2">
                 {calendars.map(calendar => (
@@ -63,7 +63,7 @@ export function SidebarNav() {
                     </div>
                 ))}
             </div>
-        </div>
+        </div> */}
       </div>
       <div className="mt-auto border-t p-4">
         <UserNav />

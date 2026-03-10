@@ -27,7 +27,7 @@ type Props = {
 export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDate }: Props) {
   const formattedEvents = React.useMemo(() => {
     return schedules.map((schedule, index) => {
-      const color = schedule.color ?? defaultEventColors[index % defaultEventColors.length];
+      const color = schedule.color ?? defaultEventColors[0];
 
       return {
         id: String(schedule.id),
@@ -40,9 +40,43 @@ export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDa
         extendedProps: {
           description: schedule.description,
         },
+        allDay: false
       };
     });
   }, [schedules]);
+
+  const eventContent = (arg: any) => {
+    const { event, isStart, timeText } = arg
+
+    if (!isStart) {
+      return { html: '' }          // empty on continuation days
+      // or simply: return null  // also works
+    }
+
+    // Always show the SAME format for ALL events
+    // Example 1: Only start time (e.g. "09:00")
+    const startTime = event.start
+      ? event.start.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,   // change to true for AM/PM
+      })
+      : ''
+
+    // Example 2: Start → End (e.g. "09:00 - 17:30") – even on multi-day segments
+    const endTime = event.end
+      ? event.end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+      : ''
+    const timeStr = endTime ? `${startTime} - ${endTime}` : startTime
+
+    return (
+      <div style={{ padding: '2px 4px', fontSize: '13px', overflow: 'hidden' }}>
+        <b>{event.title}</b>
+        <br />
+        <span style={{ opacity: 0.8 }}>{timeStr}</span>
+      </div>
+    )
+  }
 
   return (
     <Card className="w-full">
@@ -105,6 +139,25 @@ export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDa
            border-color: var(--fc-button-active-border-color);
            color: var(--fc-button-text-color);
         }
+        .fc-event:not(.fc-event-start) {
+          background: transparent !important;
+          border: none !important;
+          height: 0 !important;
+          min-height: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        .fc .fc-daygrid-event-harness-abs {
+          visibility: visible !important; 
+          position: relative !important; 
+        }
+        .fc-daygrid-day-events .fc-daygrid-event-harness {
+          margin-top: 0 !important;
+        }
+        .fc-daygrid-event {
+          margin-top: 2px !important;
+          margin-bottom: 2px !important;
+        }
       `}} />
       <CardContent className="p-4 sm:p-6 w-full max-w-full overflow-hidden">
         <FullCalendar
@@ -113,15 +166,15 @@ export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDa
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: ''
+            right: 'dayGridMonth'
           }}
           events={formattedEvents}
           height="auto"
           contentHeight="auto"
-          slotMinTime="06:00:00"
-          slotMaxTime="23:00:00"
+          slotMinTime="00:00:00"
+          slotMaxTime="24:00:00"
           nowIndicator={true}
-          navLinks={true}
+          navLinks={false}
           dayMaxEvents={true}
           dayCellClassNames={(arg) => {
             if (selectedDate && arg.date.toDateString() === selectedDate.toDateString()) {
@@ -130,11 +183,22 @@ export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDa
             return '';
           }}
           buttonText={{
-            today: 'Today'
+            today: 'Today',
+            month: 'Month'
           }}
           dateClick={(info) => {
             setSelectedDate(info.date);
           }}
+          eventTimeFormat={{
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,     // 24h format (or true for 12h with AM/PM)
+            meridiem: false,
+          }}
+          eventContent={eventContent}
+          eventDisplay="block"
+          displayEventTime={false}
+          displayEventEnd={false}
         />
         {schedules.length === 0 && (
           <p className="text-center text-muted-foreground text-sm mt-4">

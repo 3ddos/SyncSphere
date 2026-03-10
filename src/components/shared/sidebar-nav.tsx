@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, LayoutGrid } from 'lucide-react';
+import { NavItems } from './nav-items';
 
 import { cn } from '@/lib/utils';
 import { UserNav } from '@/components/shared/user-nav';
@@ -30,28 +30,8 @@ export function SidebarNav() {
         </Link>
       </div>
       <div className="flex flex-1 flex-col overflow-y-auto">
-        <nav className="flex-1 space-y-2 px-4 py-4">
-          <Link
-            href="/dashboard"
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-primary-foreground/10',
-              pathname === '/dashboard' ? 'bg-primary-foreground/20' : ''
-            )}
-          >
-            <LayoutGrid className="h-4 w-4" />
-            Dashboard
-          </Link>
-          <Link
-            href="/calendar"
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-primary-foreground/10',
-              pathname === '/calendar' ? 'bg-primary-foreground/20' : ''
-            )}
-          >
-            <Calendar className="h-4 w-4" />
-            Calendar
-          </Link>
-        </nav>
+        <NavItems className="flex-1 px-4 py-4" />
+        {/* <div className="flex-1 px-4 py-4">
         {/* <div className="flex-1 px-4 py-4">
             <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-primary-foreground/70">Calendars</h3>
             <div className="space-y-2">

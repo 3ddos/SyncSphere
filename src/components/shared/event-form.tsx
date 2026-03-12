@@ -21,12 +21,14 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { createEvent, updateEvent, deleteEvent, generateDescription } from "@/actions/event"
+import { getCurrentUser } from "@/actions/auth"
+import { User } from "@/lib/types"
 import { Schedule } from "@/actions/schedule"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { Calendar } from "../ui/calendar"
 import { Checkbox } from "../ui/checkbox"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Select,
   SelectContent,
@@ -34,10 +36,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { calendars } from "@/lib/data"
 
 
 const MADRID = tz('Europe/Madrid');
+
+const EVENT_COLORS = [
+  { name: 'Blue', value: '#3b82f6' },
+  { name: 'Green', value: '#22c55e' },
+  { name: 'Purple', value: '#a855f7' },
+  { name: 'Red', value: '#ef4444' },
+  { name: 'Orange', value: '#f97316' },
+  { name: 'Cyan', value: '#06b6d4' },
+];
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -50,6 +60,7 @@ const formSchema = z.object({
   startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)"),
   endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)"),
   repeat: z.boolean().optional(),
+  color: z.string().optional(),
 })
 
 type EventFormProps = {
@@ -61,6 +72,14 @@ type EventFormProps = {
 export function EventForm({ onSuccess, selectedDate, initialData }: EventFormProps) {
   const { toast } = useToast()
   const [isGenerating, setIsGenerating] = useState(false)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    getCurrentUser().then(setCurrentUser)
+  }, [])
+
+  const isOwner = !initialData || (currentUser && String(initialData.user_id) === String(currentUser.id))
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -70,6 +89,7 @@ export function EventForm({ onSuccess, selectedDate, initialData }: EventFormPro
       startTime: format(initialData ? new Date(initialData.start_time) : (selectedDate || new Date()), "HH:mm", { in: MADRID }),
       endTime: format(initialData ? new Date(initialData.end_time) : (selectedDate || new Date(new Date().getTime() + 60 * 60 * 1000)), "HH:mm", { in: MADRID }),
       repeat: initialData?.repeat || false,
+      color: initialData?.color || EVENT_COLORS[0].value,
     },
   })
 
@@ -151,35 +171,12 @@ export function EventForm({ onSuccess, selectedDate, initialData }: EventFormPro
             <FormItem>
               <FormLabel>Event Title</FormLabel>
               <FormControl>
-                <Input placeholder="Team Meeting" {...field} />
+                <Input placeholder="Team Meeting" {...field} disabled={!isOwner} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
-        {/* <FormField
-            control={form.control}
-            name="calendarId"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Calendar</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a calendar" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    {calendars.filter(c => c.ownerId === 'user-1').map(cal => (
-                        <SelectItem key={cal.id} value={cal.id}>{cal.name}</SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-            )}
-        /> */}
 
         <FormField
           control={form.control}
@@ -188,7 +185,7 @@ export function EventForm({ onSuccess, selectedDate, initialData }: EventFormPro
             <FormItem>
               <div className="flex items-center justify-between">
                 <FormLabel>Description</FormLabel>
-                <Button variant="ghost" size="sm" type="button" onClick={handleGenerateDescription} disabled={isGenerating}>
+                <Button variant="ghost" size="sm" type="button" onClick={handleGenerateDescription} disabled={isGenerating || !isOwner}>
                   <Wand2 className={cn("mr-2 h-4 w-4", isGenerating && "animate-spin")} />
                   {isGenerating ? "Generating..." : "Generate with AI"}
                 </Button>
@@ -198,6 +195,7 @@ export function EventForm({ onSuccess, selectedDate, initialData }: EventFormPro
                   placeholder="Tell us a little bit about the event"
                   className="resize-none"
                   {...field}
+                  disabled={!isOwner}
                 />
               </FormControl>
               <FormMessage />
@@ -212,7 +210,7 @@ export function EventForm({ onSuccess, selectedDate, initialData }: EventFormPro
             <FormItem className="flex flex-col">
               <FormLabel>Date</FormLabel>
               <Popover>
-                <PopoverTrigger asChild disabled={true}>
+                <PopoverTrigger asChild disabled={!isOwner}>
                   <FormControl>
                     <Button
                       variant={"outline"}
@@ -252,7 +250,7 @@ export function EventForm({ onSuccess, selectedDate, initialData }: EventFormPro
               <FormItem>
                 <FormLabel>Start Time</FormLabel>
                 <FormControl>
-                  <Input type="time" {...field} />
+                  <Input type="time" {...field} disabled={!isOwner} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -265,13 +263,44 @@ export function EventForm({ onSuccess, selectedDate, initialData }: EventFormPro
               <FormItem>
                 <FormLabel>End Time</FormLabel>
                 <FormControl>
-                  <Input type="time" {...field} />
+                  <Input type="time" {...field} disabled={!isOwner} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Event Color</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isOwner}>
+                <FormControl>
+                  <SelectTrigger disabled={!isOwner}>
+                    <SelectValue placeholder="Select a color" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {EVENT_COLORS.map((color) => (
+                    <SelectItem key={color.value} value={color.value}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-4 w-4 rounded-full"
+                          style={{ backgroundColor: color.value }}
+                        />
+                        {color.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
@@ -282,6 +311,7 @@ export function EventForm({ onSuccess, selectedDate, initialData }: EventFormPro
                 <Checkbox
                   checked={field.value}
                   onCheckedChange={field.onChange}
+                  disabled={!isOwner}
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
@@ -296,16 +326,23 @@ export function EventForm({ onSuccess, selectedDate, initialData }: EventFormPro
           )}
         />
 
-        <div className="flex gap-4">
-          {initialData && (
-            <Button type="button" variant="destructive" onClick={handleDelete} className="flex-1">
-              Delete Event
+        {isOwner && (
+          <div className="flex gap-4">
+            {initialData && (
+              <Button type="button" variant="destructive" onClick={handleDelete} className="flex-1">
+                Delete Event
+              </Button>
+            )}
+            <Button type="submit" className="flex-1">
+              {initialData ? "Update Event" : "Create Event"}
             </Button>
-          )}
-          <Button type="submit" className="flex-1">
-            {initialData ? "Update Event" : "Create Event"}
-          </Button>
-        </div>
+          </div>
+        )}
+        {!isOwner && initialData && (
+          <p className="text-sm text-center text-muted-foreground italic">
+            This is a shared event and cannot be modified.
+          </p>
+        )}
       </form>
     </Form>
   )

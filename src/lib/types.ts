@@ -3,6 +3,9 @@ export type User = {
   name: string;
   email: string;
   avatarUrl: string;
+  shared_users: {
+    [key: string]: string;
+  };
 };
 
 export type Calendar = {

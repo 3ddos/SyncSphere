@@ -14,6 +14,7 @@ const eventSchema = z.object({
   startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
   endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
   repeat: z.boolean().optional(),
+  color: z.string().optional(),
 })
 
 export async function createEvent(values: z.infer<typeof eventSchema>) {
@@ -31,7 +32,7 @@ export async function createEvent(values: z.infer<typeof eventSchema>) {
     return { success: false, error: "Not authenticated." }
   }
 
-  const { title, description, date, startTime, endTime, repeat } = validatedFields.data
+  const { title, description, date, startTime, endTime, repeat, color } = validatedFields.data
 
   // Build ISO datetime strings by combining the date with each time
   const dateStr = format(date, 'yyyy-MM-dd')
@@ -45,6 +46,7 @@ export async function createEvent(values: z.infer<typeof eventSchema>) {
     start_time: startTimestamp,
     end_time: endTimestamp,
     repeat: !!repeat,
+    color,
   })
 
   if (error) {
@@ -64,7 +66,29 @@ export async function updateEvent(id: string, values: z.infer<typeof eventSchema
     return { success: false, error: "Invalid fields." }
   }
 
-  const { title, description, date, startTime, endTime, repeat } = validatedFields.data
+  const { title, description, date, startTime, endTime, repeat, color } = validatedFields.data
+
+  const cookieStore = await cookies()
+  const sessionId = cookieStore.get('session_id')?.value
+
+  if (!sessionId) {
+    return { success: false, error: "Not authenticated." }
+  }
+
+  // Verify ownership
+  const { data: event, error: fetchError } = await supabase
+    .from('schedule')
+    .select('user_id')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !event) {
+    return { success: false, error: "Event not found." }
+  }
+
+  if (String(event.user_id) !== String(sessionId)) {
+    return { success: false, error: "Unauthorized. You can only update your own events." }
+  }
 
   const dateStr = format(date, 'yyyy-MM-dd')
   const startTimestamp = new Date(`${dateStr}T${startTime}:00`).toISOString()
@@ -78,6 +102,7 @@ export async function updateEvent(id: string, values: z.infer<typeof eventSchema
       start_time: startTimestamp,
       end_time: endTimestamp,
       repeat: !!repeat,
+      color,
     })
     .eq('id', id)
 
@@ -91,6 +116,28 @@ export async function updateEvent(id: string, values: z.infer<typeof eventSchema
 }
 
 export async function deleteEvent(id: string) {
+  const cookieStore = await cookies()
+  const sessionId = cookieStore.get('session_id')?.value
+
+  if (!sessionId) {
+    return { success: false, error: "Not authenticated." }
+  }
+
+  // Verify ownership
+  const { data: event, error: fetchError } = await supabase
+    .from('schedule')
+    .select('user_id')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !event) {
+    return { success: false, error: "Event not found." }
+  }
+
+  if (String(event.user_id) !== String(sessionId)) {
+    return { success: false, error: "Unauthorized. You can only delete your own events." }
+  }
+
   const { error } = await supabase
     .from('schedule')
     .delete()

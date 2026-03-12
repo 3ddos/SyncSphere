@@ -40,6 +40,7 @@ export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDa
           textColor: '#ffffff',
           extendedProps: {
             description: schedule.description,
+            user_name: schedule.user_name,
           },
           allDay: false
         };
@@ -55,6 +56,7 @@ export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDa
         textColor: '#ffffff',
         extendedProps: {
           description: schedule.description,
+          user_name: schedule.user_name,
         },
         allDay: false
       };
@@ -80,6 +82,11 @@ export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDa
         <b>{event.title}</b>
         <br />
         <span style={{ opacity: 0.8 }}>{timeStr}</span>
+        {event.extendedProps.user_name && (
+          <div style={{ fontSize: '10px', marginTop: '2px', fontStyle: 'italic' }}>
+            {event.extendedProps.user_name}
+          </div>
+        )}
       </div>
     )
   }

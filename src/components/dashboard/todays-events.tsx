@@ -36,6 +36,9 @@ export default function TodaysEvents({ schedules }: Props) {
                   {event.description && (
                     <p className="text-sm text-muted-foreground">{event.description}</p>
                   )}
+                  {event.user_name && (
+                    <p className="text-xs text-muted-foreground italic mb-1">by {event.user_name}</p>
+                  )}
                   <Badge variant="outline" className="mt-2 text-xs">
                     {format(startDate, 'HH:mm', { in: MADRID })} – {format(endDate, 'HH:mm', { in: MADRID })}
                   </Badge>

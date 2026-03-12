@@ -5,29 +5,45 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import { format } from 'date-fns';
+import { tz } from '@date-fns/tz';
 
 import { Card, CardContent } from '@/components/ui/card';
 import type { Schedule } from '@/actions/schedule';
 
-const defaultEventColors = [
-  '#3b82f6', // blue
-  '#22c55e', // green
-  '#a855f7', // purple
-  '#ef4444', // red
-  '#f97316', // orange
-  '#06b6d4', // cyan
-];
+const MADRID = tz('Europe/Madrid');
 
 type Props = {
   schedules: Schedule[];
   selectedDate: Date | undefined;
   setSelectedDate: (date: Date | undefined) => void;
+  onEventClick?: (schedule: Schedule) => void;
 };
 
-export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDate }: Props) {
+export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDate, onEventClick }: Props) {
   const formattedEvents = React.useMemo(() => {
     return schedules.map((schedule, index) => {
-      const color = schedule.color ?? defaultEventColors[0];
+      const color = schedule.color;
+      const startDate = new Date(schedule.start_time);
+      const endDate = new Date(schedule.end_time);
+
+      if (schedule.repeat) {
+        return {
+          id: String(schedule.id),
+          title: schedule.title,
+          daysOfWeek: [startDate.getDay()],
+          startTime: format(startDate, 'HH:mm:ss'),
+          endTime: format(endDate, 'HH:mm:ss'),
+          startRecur: schedule.start_time,
+          backgroundColor: color,
+          borderColor: color,
+          textColor: '#ffffff',
+          extendedProps: {
+            description: schedule.description,
+          },
+          allDay: false
+        };
+      }
 
       return {
         id: String(schedule.id),
@@ -55,18 +71,8 @@ export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDa
 
     // Always show the SAME format for ALL events
     // Example 1: Only start time (e.g. "09:00")
-    const startTime = event.start
-      ? event.start.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,   // change to true for AM/PM
-      })
-      : ''
-
-    // Example 2: Start → End (e.g. "09:00 - 17:30") – even on multi-day segments
-    const endTime = event.end
-      ? event.end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
-      : ''
+    const startTime = event.start ? format(event.start, 'HH:mm', { in: MADRID }) : ''
+    const endTime = event.end ? format(event.end, 'HH:mm', { in: MADRID }) : ''
     const timeStr = endTime ? `${startTime} - ${endTime}` : startTime
 
     return (
@@ -194,6 +200,12 @@ export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDa
             minute: '2-digit',
             hour12: false,     // 24h format (or true for 12h with AM/PM)
             meridiem: false,
+          }}
+          eventClick={(info) => {
+            const schedule = schedules.find(s => String(s.id) === info.event.id);
+            if (schedule && onEventClick) {
+              onEventClick(schedule);
+            }
           }}
           eventContent={eventContent}
           eventDisplay="block"

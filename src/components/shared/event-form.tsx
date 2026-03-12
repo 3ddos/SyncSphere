@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { format } from "date-fns"
+import { tz } from "@date-fns/tz"
 import { CalendarIcon, Wand2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -19,10 +20,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { createEvent, generateDescription } from "@/actions/event"
+import { createEvent, updateEvent, deleteEvent, generateDescription } from "@/actions/event"
+import { Schedule } from "@/actions/schedule"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { Calendar } from "../ui/calendar"
+import { Checkbox } from "../ui/checkbox"
 import { useState } from "react"
 import {
   Select,
@@ -34,6 +37,8 @@ import {
 import { calendars } from "@/lib/data"
 
 
+const MADRID = tz('Europe/Madrid');
+
 const formSchema = z.object({
   title: z.string().min(2, {
     message: "Title must be at least 2 characters.",
@@ -44,36 +49,59 @@ const formSchema = z.object({
   }),
   startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)"),
   endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:mm)"),
+  repeat: z.boolean().optional(),
 })
 
 type EventFormProps = {
   onSuccess?: () => void
   selectedDate?: Date
+  initialData?: Schedule
 }
 
-export function EventForm({ onSuccess, selectedDate }: EventFormProps) {
+export function EventForm({ onSuccess, selectedDate, initialData }: EventFormProps) {
   const { toast } = useToast()
   const [isGenerating, setIsGenerating] = useState(false)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      date: selectedDate || new Date(),
-      startTime: format(selectedDate || new Date(), "HH:mm"),
-      endTime: format(selectedDate || new Date(new Date().getTime() + 60 * 60 * 1000), "HH:mm"),
+      title: initialData?.title || "",
+      description: initialData?.description || "",
+      date: initialData ? new Date(initialData.start_time) : (selectedDate || new Date()),
+      startTime: format(initialData ? new Date(initialData.start_time) : (selectedDate || new Date()), "HH:mm", { in: MADRID }),
+      endTime: format(initialData ? new Date(initialData.end_time) : (selectedDate || new Date(new Date().getTime() + 60 * 60 * 1000)), "HH:mm", { in: MADRID }),
+      repeat: initialData?.repeat || false,
     },
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log('¡onSubmit')
-    const result = await createEvent(values)
+    const result = initialData
+      ? await updateEvent(String(initialData.id), values)
+      : await createEvent(values)
+
     if (result.success) {
       toast({
-        title: "Event Created",
-        description: `Your event "${values.title}" has been successfully created.`,
+        title: initialData ? "Event Updated" : "Event Created",
+        description: `Your event "${values.title}" has been successfully ${initialData ? "updated" : "created"}.`,
       })
-      form.reset()
+      if (!initialData) form.reset()
+      onSuccess?.()
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: result.error,
+      })
+    }
+  }
+
+  async function handleDelete() {
+    if (!initialData) return
+    const result = await deleteEvent(String(initialData.id))
+    if (result.success) {
+      toast({
+        title: "Event Deleted",
+        description: `Your event "${initialData.title}" has been successfully deleted.`,
+      })
       onSuccess?.()
     } else {
       toast({
@@ -194,7 +222,7 @@ export function EventForm({ onSuccess, selectedDate }: EventFormProps) {
                       )}
                     >
                       {field.value ? (
-                        format(field.value, "PPP")
+                        format(field.value, "PPP", { in: MADRID })
                       ) : (
                         <span>Pick a date</span>
                       )}
@@ -245,7 +273,39 @@ export function EventForm({ onSuccess, selectedDate }: EventFormProps) {
           />
         </div>
 
-        <Button type="submit" className="w-full">Create Event</Button>
+        <FormField
+          control={form.control}
+          name="repeat"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Repeat weekly
+                </FormLabel>
+                <FormDescription>
+                  This event will repeat every same day of the week for the future months.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        <div className="flex gap-4">
+          {initialData && (
+            <Button type="button" variant="destructive" onClick={handleDelete} className="flex-1">
+              Delete Event
+            </Button>
+          )}
+          <Button type="submit" className="flex-1">
+            {initialData ? "Update Event" : "Create Event"}
+          </Button>
+        </div>
       </form>
     </Form>
   )

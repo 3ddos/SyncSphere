@@ -13,6 +13,7 @@ const eventSchema = z.object({
   date: z.date(),
   startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
   endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  repeat: z.boolean().optional(),
 })
 
 export async function createEvent(values: z.infer<typeof eventSchema>) {
@@ -30,7 +31,7 @@ export async function createEvent(values: z.infer<typeof eventSchema>) {
     return { success: false, error: "Not authenticated." }
   }
 
-  const { title, description, date, startTime, endTime } = validatedFields.data
+  const { title, description, date, startTime, endTime, repeat } = validatedFields.data
 
   // Build ISO datetime strings by combining the date with each time
   const dateStr = format(date, 'yyyy-MM-dd')
@@ -43,6 +44,7 @@ export async function createEvent(values: z.infer<typeof eventSchema>) {
     description: description ?? null,
     start_time: startTimestamp,
     end_time: endTimestamp,
+    repeat: !!repeat,
   })
 
   if (error) {
@@ -54,6 +56,55 @@ export async function createEvent(values: z.infer<typeof eventSchema>) {
 
   return { success: true }
 }
+
+export async function updateEvent(id: string, values: z.infer<typeof eventSchema>) {
+  const validatedFields = eventSchema.safeParse(values)
+
+  if (!validatedFields.success) {
+    return { success: false, error: "Invalid fields." }
+  }
+
+  const { title, description, date, startTime, endTime, repeat } = validatedFields.data
+
+  const dateStr = format(date, 'yyyy-MM-dd')
+  const startTimestamp = new Date(`${dateStr}T${startTime}:00`).toISOString()
+  const endTimestamp = new Date(`${dateStr}T${endTime}:00`).toISOString()
+
+  const { error } = await supabase
+    .from('schedule')
+    .update({
+      title,
+      description: description ?? null,
+      start_time: startTimestamp,
+      end_time: endTimestamp,
+      repeat: !!repeat,
+    })
+    .eq('id', id)
+
+  if (error) {
+    console.error("Error updating schedule:", error)
+    return { success: false, error: "Failed to update event." }
+  }
+
+  revalidatePath('/calendar')
+  return { success: true }
+}
+
+export async function deleteEvent(id: string) {
+  const { error } = await supabase
+    .from('schedule')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error("Error deleting schedule:", error)
+    return { success: false, error: "Failed to delete event." }
+  }
+
+  revalidatePath('/calendar')
+  return { success: true }
+}
+
 
 
 const descriptionSchema = z.object({

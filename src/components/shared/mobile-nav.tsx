@@ -12,9 +12,18 @@ import {
 import { NavItems } from './nav-items';
 import { Logo } from '../logo';
 import { useState } from 'react';
+import { logoutUser } from '@/actions/auth';
+import { redirect } from 'next/navigation';
+import { LogOut } from 'lucide-react';
 
 export function MobileNav() {
     const [open, setOpen] = useState(false);
+
+    async function onSubmitLogout() {
+        console.log('logout');
+        await logoutUser();
+        redirect('/login');
+    }
 
     return (
         <header className="flex h-16 items-center border-b px-4 md:hidden">
@@ -36,6 +45,15 @@ export function MobileNav() {
                             className="flex-1 px-4 py-6"
                             onItemClick={() => setOpen(false)}
                         />
+                        <div className='px-4 py-4'>
+                            <Button
+                                onClick={onSubmitLogout}
+                                className={'flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-primary-foreground/10'}
+                            >
+                                <LogOut className="h-4 w-4" />
+                                Logout
+                            </Button>
+                        </div>
                     </div>
                 </SheetContent>
             </Sheet>

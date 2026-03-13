@@ -15,11 +15,11 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="col-span-4 lg:col-span-7">
+        {/* <div className="col-span-4 lg:col-span-7">
            <Suspense fallback={<Skeleton className="h-32 w-full" />}>
             <AiSummary />
            </Suspense>
-        </div>
+        </div> */}
         <div className="col-span-4 lg:col-span-7">
           <TodaysEvents schedules={todaySchedules} />
         </div>

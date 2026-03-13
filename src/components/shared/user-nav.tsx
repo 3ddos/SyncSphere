@@ -21,12 +21,6 @@ import { User } from '@/lib/types';
 export function UserNav() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  async function onSubmitLogout() {
-    console.log('logout');
-    await logoutUser();
-    redirect('/login');
-  }
-
   useEffect(() => {
     getCurrentUser().then((user) => setCurrentUser(user));
   }, []);
@@ -74,7 +68,7 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator /> */}
-        <DropdownMenuItem onClick={onSubmitLogout}>
+        <DropdownMenuItem onClick={logoutUser}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Logout</span>
         </DropdownMenuItem>

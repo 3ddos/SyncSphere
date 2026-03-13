@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 import { User } from '@/lib/types';
+import { redirect } from 'next/navigation';
 
 export async function registerUser(formData: FormData) {
   try {
@@ -123,10 +124,10 @@ export async function loginUser(formData: FormData) {
 }
 
 export async function logoutUser() {
-  console.log('logoutUser')
   const cookieStore = await cookies();
   cookieStore.delete('session_id');
   cookieStore.delete('session_user');
+  redirect('/login');
 }
 
 export async function getCurrentUser() {

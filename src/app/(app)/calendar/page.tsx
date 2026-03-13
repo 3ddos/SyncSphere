@@ -36,8 +36,8 @@ export default function CalendarPage() {
               <PlusCircle className="mr-2 h-4 w-4" />
               New Event
             </Button>
-            <EventSheet 
-              selectedDate={selectedDate} 
+            <EventSheet
+              selectedDate={selectedDate}
               initialData={selectedEvent}
               open={isSheetOpen}
               onOpenChange={(open) => {
@@ -53,10 +53,10 @@ export default function CalendarPage() {
             <Loader2 className="animate-spin" />
           </div>
         ) : (
-          <MonthlyCalendar 
-            schedules={schedules} 
-            selectedDate={selectedDate} 
-            setSelectedDate={setSelectedDate} 
+          <MonthlyCalendar
+            schedules={schedules}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
             onEventClick={(schedule) => {
               setSelectedEvent(schedule);
               setIsSheetOpen(true);

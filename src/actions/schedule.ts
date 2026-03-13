@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { supabase } from '@/lib/supabase';
+import { SharedUser } from '@/lib/types';
 
 export type Schedule = {
   id: string | number;
@@ -20,35 +21,32 @@ async function getUserId(): Promise<string | null> {
   return cookieStore.get('session_id')?.value ?? null;
 }
 
-// async function getSharedUserIds(userId: string): Promise<string[]> {
+export async function getSharedUsersFromCookies(): Promise<SharedUser> {
+  const cookieStore = await cookies();
+  const user = JSON.parse(cookieStore.get('session_user')?.value || '{}');
+  if (!user) return {};
+  const shared = user.shared_users || {};
+  return { ...shared, [user.id]: user.name };
+}
+
+// async function getSharedUsersFromDB(userId: string): Promise<SharedUser> {
 //   const { data, error } = await supabase
 //     .from('users')
-//     .select('shared_users')
+//     .select('shared_users, name')
 //     .eq('id', userId)
 //     .single();
 
-//   if (error || !data?.shared_users) return [];
-//   return Object.keys(data.shared_users);
+//   if (error) return {};
+//   const shared = data.shared_users || {};
+//   return { ...shared, [userId]: data.name };
 // }
-
-async function getSharedUsers(userId: string): Promise<{ [key: string]: string }> {
-  const { data, error } = await supabase
-    .from('users')
-    .select('shared_users, name')
-    .eq('id', userId)
-    .single();
-
-  if (error) return {};
-  const shared = data.shared_users || {};
-  return { ...shared, [userId]: data.name };
-}
 
 export async function getSchedules(): Promise<Schedule[] | { error: string }> {
   try {
     const userId = await getUserId();
     if (!userId) return { error: 'Not authenticated' };
 
-    const sharedUsers = await getSharedUsers(userId);
+    const sharedUsers = await getSharedUsersFromCookies();
     const userIds = Object.keys(sharedUsers);
 
     const { data, error } = await supabase
@@ -78,7 +76,7 @@ export async function getTodaysSchedules(): Promise<Schedule[] | { error: string
     const userId = await getUserId();
     if (!userId) return { error: 'Not authenticated' };
 
-    const sharedUsers = await getSharedUsers(userId);
+    const sharedUsers = await getSharedUsersFromCookies();
     const userIds = Object.keys(sharedUsers);
 
     const now = new Date();

@@ -24,3 +24,5 @@ export type Event = {
   endTime: Date;
   participants: string[];
 };
+
+export type SharedUser = { [key: string]: string };

@@ -179,7 +179,7 @@ export default function MonthlyCalendar({ schedules, selectedDate, setSelectedDa
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth'
+            right: ''
           }}
           events={formattedEvents}
           height="auto"

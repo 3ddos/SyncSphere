@@ -36,7 +36,7 @@ export function MobileNav() {
                     </SheetHeader>
                     <div className="flex flex-col h-[calc(100vh-64px)] overflow-y-auto">
                         <NavItems
-                            className="flex-1 px-4 py-6"
+                            className="flex px-4 py-6"
                             onItemClick={() => setOpen(false)}
                         />
                         <CalendarNav />

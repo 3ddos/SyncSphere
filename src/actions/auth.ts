@@ -9,7 +9,8 @@ import { redirect } from 'next/navigation';
 export async function registerUser(formData: FormData) {
   try {
     const name = formData.get('name') as string;
-    const email = formData.get('email') as string;
+    const emailAux = formData.get('email') as string;
+    const email = emailAux.toLowerCase();
     const password = formData.get('password') as string;
 
     if (!name || !email || !password) {
@@ -75,7 +76,8 @@ export async function registerUser(formData: FormData) {
 
 export async function loginUser(formData: FormData) {
   try {
-    const email = formData.get('email') as string;
+    const emailAux = formData.get('email') as string;
+    const email = emailAux.toLowerCase();
     const password = formData.get('password') as string;
 
     if (!email || !password) {

@@ -6,6 +6,9 @@ import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { supabase } from "@/lib/supabase"
 import { format } from "date-fns"
+import { tz, TZDate } from "@date-fns/tz"
+
+const MADRID = tz('Europe/Madrid')
 
 const eventSchema = z.object({
   title: z.string().min(2),
@@ -34,10 +37,10 @@ export async function createEvent(values: z.infer<typeof eventSchema>) {
 
   const { title, description, date, startTime, endTime, repeat, color } = validatedFields.data
 
-  // Build ISO datetime strings by combining the date with each time
-  const dateStr = format(date, 'yyyy-MM-dd')
-  const startTimestamp = new Date(`${dateStr}T${startTime}:00`).toISOString()
-  const endTimestamp = new Date(`${dateStr}T${endTime}:00`).toISOString()
+  // Build ISO datetime strings by combining the date with each time in Madrid timezone
+  const dateStr = format(date, 'yyyy-MM-dd', { in: MADRID })
+  const startTimestamp = new TZDate(`${dateStr}T${startTime}:00`, 'Europe/Madrid').toISOString()
+  const endTimestamp = new TZDate(`${dateStr}T${endTime}:00`, 'Europe/Madrid').toISOString()
 
   const { error } = await supabase.from('schedule').insert({
     user_id: sessionId,
@@ -90,9 +93,10 @@ export async function updateEvent(id: string, values: z.infer<typeof eventSchema
     return { success: false, error: "Unauthorized. You can only update your own events." }
   }
 
-  const dateStr = format(date, 'yyyy-MM-dd')
-  const startTimestamp = new Date(`${dateStr}T${startTime}:00`).toISOString()
-  const endTimestamp = new Date(`${dateStr}T${endTime}:00`).toISOString()
+  // Build ISO datetime strings by combining the date with each time in Madrid timezone
+  const dateStr = format(date, 'yyyy-MM-dd', { in: MADRID })
+  const startTimestamp = new TZDate(`${dateStr}T${startTime}:00`, 'Europe/Madrid').toISOString()
+  const endTimestamp = new TZDate(`${dateStr}T${endTime}:00`, 'Europe/Madrid').toISOString()
 
   const { error } = await supabase
     .from('schedule')

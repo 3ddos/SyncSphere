@@ -4,9 +4,9 @@ import { PlaceHolderImages } from './placeholder-images';
 const userAvatar = PlaceHolderImages.find(img => img.id === 'user-avatar')?.imageUrl || 'https://picsum.photos/seed/1/100/100';
 
 export const users: User[] = [
-  { id: 'user-1', name: 'Alex Doe', email: 'alex@example.com', avatarUrl: userAvatar },
-  { id: 'user-2', name: 'Jordan Smith', email: 'jordan@example.com', avatarUrl: 'https://picsum.photos/seed/2/100/100' },
-  { id: 'user-3', name: 'Taylor Brown', email: 'taylor@example.com', avatarUrl: 'https://picsum.photos/seed/3/100/100' },
+  { id: 'user-1', name: 'Alex Doe', email: 'alex@example.com', avatarUrl: userAvatar, shared_users: {} },
+  { id: 'user-2', name: 'Jordan Smith', email: 'jordan@example.com', avatarUrl: 'https://picsum.photos/seed/2/100/100', shared_users: {} },
+  { id: 'user-3', name: 'Taylor Brown', email: 'taylor@example.com', avatarUrl: 'https://picsum.photos/seed/3/100/100', shared_users: {} },
 ];
 
 export const calendars: Calendar[] = [

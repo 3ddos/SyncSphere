@@ -24,6 +24,15 @@ export default function CalendarPage() {
 
   useEffect(() => {
     fetchSchedules();
+
+    const handleSharedUsersUpdate = () => {
+      fetchSchedules();
+    };
+
+    window.addEventListener('shared-users-updated', handleSharedUsersUpdate);
+    return () => {
+      window.removeEventListener('shared-users-updated', handleSharedUsersUpdate);
+    };
   }, []);
 
   return (

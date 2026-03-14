@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers';
 import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
-import { User } from '@/lib/types';
+import { SharedUser, User } from '@/lib/types';
 import { redirect } from 'next/navigation';
 
 export async function registerUser(formData: FormData) {
@@ -112,6 +112,20 @@ export async function loginUser(formData: FormData) {
     });
 
     cookieStore.set('session_user', JSON.stringify(user), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: '/',
+    });
+
+    const sharedUsers: SharedUser = {
+      [user.id]: { name: user.name, active: true }
+    };
+    Object.keys(user.shared_users).forEach((key: string) => {
+      sharedUsers[key] = { name: user.shared_users[key], active: true };
+    });
+    console.log('sharedUsers', sharedUsers)
+    cookieStore.set('session_shared_users', JSON.stringify(sharedUsers), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7, // 1 week

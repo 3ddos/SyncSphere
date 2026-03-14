@@ -3,7 +3,7 @@
 import { Loader2 } from 'lucide-react';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
-import { getSharedUsersFromCookies } from '@/actions/schedule';
+import { activeSharedUser, getSharedUsersFromCookies } from '@/actions/schedule';
 import { useState, useEffect } from 'react';
 import { SharedUser } from '@/lib/types';
 
@@ -22,8 +22,10 @@ export function CalendarNav() {
         fetchSchedules();
     }, []);
 
-    const handleCheckboxChange = (checked: boolean | string, key: string) => {
-        console.log(checked, key);
+    const handleCheckboxChange = async (checked: boolean | string, key: string) => {
+        const updatedSharedUsers = await activeSharedUser(key, checked);
+        setSharedUsers(updatedSharedUsers);
+        window.dispatchEvent(new Event('shared-users-updated'));
     }
 
     return (
@@ -36,10 +38,9 @@ export function CalendarNav() {
             ) : (
                 <div className="space-y-2">
                     {Object.entries(sharedUsers).map(([key, value]: [string, any]) => (
-                        console.log(key, value),
                         <div key={key} className="flex items-center space-x-2 rounded-lg px-3 py-2">
-                            <Checkbox id={key} defaultChecked className="border-primary-foreground/50 data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground" onCheckedChange={(checked) => { handleCheckboxChange(checked, key) }} />
-                            <Label htmlFor={key} className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>{value}</Label>
+                            <Checkbox id={key} checked={value.active} className="border-primary-foreground/50 data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground" onCheckedChange={(checked) => { handleCheckboxChange(checked, key) }} />
+                            <Label htmlFor={key} className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>{value.name}</Label>
                         </div>
                     ))}
                 </div>)}

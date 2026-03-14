@@ -23,10 +23,32 @@ async function getUserId(): Promise<string | null> {
 
 export async function getSharedUsersFromCookies(): Promise<SharedUser> {
   const cookieStore = await cookies();
-  const user = JSON.parse(cookieStore.get('session_user')?.value || '{}');
-  if (!user) return {};
-  const shared = user.shared_users || {};
-  return { ...shared, [user.id]: user.name };
+  const sharedUsers = JSON.parse(cookieStore.get('session_shared_users')?.value || '{}');
+  if (!sharedUsers) return {};
+  return sharedUsers;
+}
+
+export async function getActiveSharedUsersFromCookies(): Promise<SharedUser> {
+  const sharedUsers = await getSharedUsersFromCookies();
+  const activeSharedKeys = Object.keys(sharedUsers).filter(key => sharedUsers[key].active);
+  const activeSharedUsers = activeSharedKeys.reduce((acc, key) => {
+    acc[key] = sharedUsers[key];
+    return acc;
+  }, {} as SharedUser);
+  return activeSharedUsers;
+}
+
+export async function activeSharedUser(userId: string, active: boolean | string): Promise<SharedUser> {
+  const cookieStore = await cookies();
+  const sharedUsers = await getSharedUsersFromCookies();
+  sharedUsers[userId].active = (active === 'true' || active === true);
+  cookieStore.set('session_shared_users', JSON.stringify(sharedUsers), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 7, // 1 week
+    path: '/',
+  });
+  return sharedUsers;
 }
 
 // async function getSharedUsersFromDB(userId: string): Promise<SharedUser> {
@@ -46,7 +68,7 @@ export async function getSchedules(): Promise<Schedule[] | { error: string }> {
     const userId = await getUserId();
     if (!userId) return { error: 'Not authenticated' };
 
-    const sharedUsers = await getSharedUsersFromCookies();
+    const sharedUsers = await getActiveSharedUsersFromCookies();
     const userIds = Object.keys(sharedUsers);
 
     const { data, error } = await supabase
@@ -61,7 +83,7 @@ export async function getSchedules(): Promise<Schedule[] | { error: string }> {
 
     const schedulesWithNames = (data as Schedule[]).map(s => ({
       ...s,
-      user_name: sharedUsers[String(s.user_id)] || 'Unknown User'
+      user_name: sharedUsers[String(s.user_id)].name || 'Unknown User'
     }));
 
     return schedulesWithNames;
@@ -76,7 +98,7 @@ export async function getTodaysSchedules(): Promise<Schedule[] | { error: string
     const userId = await getUserId();
     if (!userId) return { error: 'Not authenticated' };
 
-    const sharedUsers = await getSharedUsersFromCookies();
+    const sharedUsers = await getActiveSharedUsersFromCookies();
     const userIds = Object.keys(sharedUsers);
 
     const now = new Date();
@@ -99,7 +121,7 @@ export async function getTodaysSchedules(): Promise<Schedule[] | { error: string
 
     const filteredData = (data as Schedule[]).map(s => ({
       ...s,
-      user_name: sharedUsers[String(s.user_id)] || 'Unknown User'
+      user_name: sharedUsers[String(s.user_id)].name || 'Unknown User'
     })).filter(event => {
       if (!event.repeat) return true;
       const eventDate = new Date(event.start_time);

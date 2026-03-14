@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LogOut } from 'lucide-react';
 import { logoutUser, getCurrentUser } from '@/actions/auth';
-import { redirect } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { User } from '@/lib/types';
 

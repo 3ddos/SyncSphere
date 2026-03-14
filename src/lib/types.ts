@@ -25,4 +25,9 @@ export type Event = {
   participants: string[];
 };
 
-export type SharedUser = { [key: string]: string };
+export type SharedUser = {
+  [key: string]: {
+    name: string,
+    active: boolean
+  }
+};

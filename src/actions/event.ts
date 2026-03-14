@@ -39,8 +39,8 @@ export async function createEvent(values: z.infer<typeof eventSchema>) {
 
   // Build ISO datetime strings by combining the date with each time in Madrid timezone
   const dateStr = format(date, 'yyyy-MM-dd', { in: MADRID })
-  const startTimestamp = new TZDate(`${dateStr}T${startTime}:00`).toISOString()
-  const endTimestamp = new TZDate(`${dateStr}T${endTime}:00`).toISOString()
+  const startTimestamp = new Date(`${dateStr}T${startTime}:00`).toISOString()
+  const endTimestamp = new Date(`${dateStr}T${endTime}:00`).toISOString()
 
   const { error } = await supabase.from('schedule').insert({
     user_id: sessionId,
@@ -95,8 +95,8 @@ export async function updateEvent(id: string, values: z.infer<typeof eventSchema
 
   // Build ISO datetime strings by combining the date with each time in Madrid timezone
   const dateStr = format(date, 'yyyy-MM-dd', { in: MADRID })
-  const startTimestamp = new TZDate(`${dateStr}T${startTime}:00`).toISOString()
-  const endTimestamp = new TZDate(`${dateStr}T${endTime}:00`).toISOString()
+  const startTimestamp = new Date(`${dateStr}T${startTime}:00`).toISOString()
+  const endTimestamp = new Date(`${dateStr}T${endTime}:00`).toISOString()
 
   const { error } = await supabase
     .from('schedule')

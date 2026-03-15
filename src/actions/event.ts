@@ -37,12 +37,10 @@ export async function createEvent(values: z.infer<typeof eventSchema>) {
 
   const { title, description, date, startTime, endTime, repeat, color } = validatedFields.data
 
-  console.log("INI: ", { date, startTime, endTime })
   // Build ISO datetime strings by combining the date with each time in Madrid timezone
   const dateStr = format(date, 'yyyy-MM-dd', { in: MADRID })
   const startTimestamp = `${dateStr}T${startTime}:00.000+01:00`
   const endTimestamp = `${dateStr}T${endTime}:00.000+01:00`
-  console.log("END: ", { dateStr, startTimestamp, endTimestamp })
 
   const { error } = await supabase.from('schedule').insert({
     user_id: sessionId,
@@ -95,12 +93,10 @@ export async function updateEvent(id: string, values: z.infer<typeof eventSchema
     return { success: false, error: "Unauthorized. You can only update your own events." }
   }
 
-  console.log("INI: ", { date, startTime, endTime })
   // Build ISO datetime strings by combining the date with each time in Madrid timezone
   const dateStr = format(date, 'yyyy-MM-dd', { in: MADRID })
   const startTimestamp = `${dateStr}T${startTime}:00.000+01:00`
   const endTimestamp = `${dateStr}T${endTime}:00.000+01:00`
-  console.log("END: ", { dateStr, startTimestamp, endTimestamp })
 
   const { error } = await supabase
     .from('schedule')
